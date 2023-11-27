@@ -1,0 +1,2 @@
+llama-index==0.9.6.post2
+python-dotenv==1.0.0
