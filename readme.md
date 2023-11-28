@@ -2,6 +2,7 @@
 
 Сервис генерирует статью на основе предоставленной темы и ссылок на актуальные веб-ресурсы.
 
+
 ## Начало работы
 
 - Создайте и активируйте виртуальное окружение:  
@@ -16,10 +17,25 @@
 Тема также должна быть заключена в кавычки.  
 `python main.py -u "<ссылка>" "<ссылка>" ... "<ссылка>" -q "<название темы>"`
 
+
+## Графический интерфейс
+
+- Для запуска графического интерфейса выполните:  
+`python gui.py`  
+Веб-сервис доступен по адресу:  
+`http://0.0.0.0:7860`
+
+
+## Журнал
+
+После запуска проекта будет создан файл `logs.log`.  
+В нем будут фиксироваться запросы (тема статьи и ссылки) и ответ (сгенерированная статья).
+
+
 ## Примеры
 
 - **Тема**: "ТОП 5 трав для выращивания на подоконнике. Как стать садоводом в тренде дома?"  
-**Запрос**:
+**Запрос**:  
 ```
 python main.py -u "https://www.7ya.ru/article/Chto-mozhno-vyrastit-v-kachestve-mikrozeleni/?utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://www.agroxxi.ru/zhurnal-agromir-xxi/stati-rastenievodstvo/tradeskancija-lechebnye-svoistva-i-vyraschivanie-doma.html?utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://www.advis.ru/php/view_news.php?id=9E737153-8ADC-0B4B-96F6-83CBCB9415FC&utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://www.kirov.kp.ru/daily/27580.5/4849898/?utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://riamo.ru/article/662765/kazhdyj-vtoroj-zhitel-goroda-v-rf-vyraschivaet-na-podokonnike-ovoschi-i-zelen-opros?utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://aif.ru/dacha/ogorod/ogorod_zimoy_v_rossii_nashli_sposob_sekonomit_na_zeleni_i_ovoshchah?utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://inmozhaisk.ru/news/ekologiya/vitaminy-na-okne-sadovod-iz-mozhajska-rasskazala-kak-vyrastit-zelen-v-kvartire?utm_source=yxnews&utm_medium=desktop&utm_referrer=https%3A%2F%2Fdzen.ru%2Fnews%2Fsearch%3Ftext%3D" "https://zelen-na-podokonnike.ru/" -q "ТОП 5 трав для выращивания на подоконнике. Как стать садоводом в тренде дома?"
 ```
@@ -92,8 +108,8 @@ python main.py -u "https://www.kp.ru/expert/dom/luchshie-okhrannye-sistemy-dlya-
 
 </br>
 
-- **Тема**: "Осенняя кладезь витаминов: ценность клюквы, облепихи и необычные рецепты"
-**Запрос**:
+- **Тема**: "Осенняя кладезь витаминов: ценность клюквы, облепихи и необычные рецепты"  
+**Запрос**:  
 ```
 python main.py -u "https://www.edimdoma.ru/jivem_doma/posts/22376-vse-na-borbu-s-avitaminozom-vkusnye-i-poleznye-yagody-v-osennem-menyu" "https://www.sadurala.com/blog/lovkost-ruk-i-nikakih-zabot-kak-sobirat-oblepihu" "https://lefood.menu/recipes/bedryshki-indeyki-zapechennye-s-chesnokom-apelsinami-i-klyukvoy/" "https://elementaree.ru/blog/science/klyukva-polza-i-vred/" "https://www.iamcook.ru/showrecipe/13639" "https://www.russianfood.com/recipes/recipe.php?rid=153501" "https://www.rigla.ru/about/news/2022/oblepiha" -q "Осенняя кладезь витаминов: ценность клюквы, облепихи и необычные рецепты"
 ```
