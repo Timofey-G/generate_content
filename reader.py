@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from llama_index import download_loader
 from llama_index.readers.schema.base import Document
+from main import logger
 
 # BeautifulSoupWebReader = download_loader("BeautifulSoupWebReader")
 
@@ -35,7 +36,9 @@ class BeautifulSoupWebReader(download_loader("BeautifulSoupWebReader")):
             try:
                 page = requests.get(url)
             except Exception:
-                raise ValueError(f"One of the inputs is not a valid url: {url}")
+                # raise ValueError(f"One of the inputs is not a valid url: {url}")
+                logger.error(f"Не удалось получиться доступ к url: {url}")
+                continue
 
             hostname = custom_hostname or urlparse(url).hostname or ""
 
