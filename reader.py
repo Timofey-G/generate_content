@@ -2,9 +2,15 @@ from typing import List, Optional
 
 from llama_index import download_loader
 from llama_index.readers.schema.base import Document
-from main import logger
+import logging
 
-# BeautifulSoupWebReader = download_loader("BeautifulSoupWebReader")
+logger = logging.getLogger("logger")
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler("logs.log")
+formatter = logging.Formatter("%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logging.getLogger().setLevel(logging.WARNING)
 
 
 class BeautifulSoupWebReader(download_loader("BeautifulSoupWebReader")):

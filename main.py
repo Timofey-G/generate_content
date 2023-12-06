@@ -4,20 +4,9 @@ import logging
 from dotenv import load_dotenv
 from llama_index import ServiceContext, VectorStoreIndex
 from llama_index.llms import OpenAI
-from reader import BeautifulSoupWebReader
+from reader import BeautifulSoupWebReader, logger
 
 load_dotenv()
-
-logger = logging.getLogger("logger")
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
-# logging.basicConfig(level=logging.WARNING)
-logging.getLogger().setLevel(logging.WARNING)
-
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LOADER = BeautifulSoupWebReader()
