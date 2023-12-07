@@ -26,6 +26,14 @@
 `http://0.0.0.0:7860`
 
 
+## Докер
+
+- Сборка:  
+`docker build -t generate_content .`
+- Запуск:  
+`docker run --name=generate_content -p 7860:7860 -e OPENAI_API_KEY='<ваш ключ к api chat gpt>' generate_content`
+
+
 ## Журнал
 
 После запуска проекта будет создан файл `logs.log`.  
