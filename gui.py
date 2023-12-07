@@ -33,7 +33,10 @@ def run_gradio():
             gradio_interface, inputs=[url_input, query_input], outputs=output
         )
 
-    demo.launch(server_name="0.0.0.0", share=True)
+    demo.launch(
+        server_name="0.0.0.0",
+        share=True,
+    )
 
 
 if __name__ == "__main__":

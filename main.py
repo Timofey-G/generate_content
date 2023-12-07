@@ -1,34 +1,106 @@
 import os
 import argparse
-import logging
 from dotenv import load_dotenv
 from llama_index import ServiceContext, VectorStoreIndex
-from llama_index.llms import OpenAI
+from llama_index.llms import LangChainLLM
 from reader import BeautifulSoupWebReader, logger
+from llama_index.callbacks import CallbackManager, LlamaDebugHandler
+from llama_index.callbacks.base import CallbackManager
+from llama_index.logger import LlamaLogger
+from langchain.chat_models.gigachat import GigaChat
+import os
+from llama_index import VectorStoreIndex
+from llama_index.storage import StorageContext
+
+# from llama_index.llms import OpenAI, LangChainLLM
+from llama_index import LLMPredictor, ServiceContext
+
+from llama_index.indices.postprocessor import (
+    SimilarityPostprocessor,
+    LongContextReorder,
+)
+from llama_index.indices.postprocessor import CohereRerank
+from llama_index.llms.base import ChatMessage, MessageRole
+from llama_index.prompts.base import ChatPromptTemplate
+from llama_index.response_synthesizers import get_response_synthesizer
+from langchain.chat_models.gigachat import GigaChat
+from llama_index.indices.postprocessor import (
+    SimilarityPostprocessor,
+    LongContextReorder,
+)
+from llama_index.indices.postprocessor import CohereRerank
+
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+COHERE_API_KEY = os.getenv("COHERE_API_KEY")
+GIGA_CHAT_API_KEY = os.getenv("CREDENTIALS")
+giga_chat = GigaChat(credentials=GIGA_CHAT_API_KEY, verify_ssl_certs=False)
 LOADER = BeautifulSoupWebReader()
 INDEX_DIR = "storage"
-SERVICE_CONTEXT = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo-16k"))
+
+
+def get_query_engine(index):
+    response_synthesizer = get_response_synthesizer(
+        streaming=True,
+        response_mode="tree_summarize",
+        verbose=True,
+        service_context=ServiceContext.from_defaults(llm=LangChainLLM(giga_chat)),
+        summary_template=ChatPromptTemplate(
+            message_templates=[
+                ChatMessage(
+                    content=(
+                        "Напиши подробную и большую статью, раскрой все указанные темы полностью. Используй не меньше 1000 слов. Ответь на русском языке."
+                    ),
+                    role=MessageRole.SYSTEM,
+                ),
+                ChatMessage(
+                    content=("Напиши полноценную статью на тему: '{query_str}'"),
+                    role=MessageRole.USER,
+                ),
+            ]
+        ),
+    )
+
+    node_postprocessors = [
+        SimilarityPostprocessor(similarity_cutoff=0.82),
+        # CohereRerank(top_n=1, api_key=COHERE_API_KEY),
+        # MyPostprocessor2(),
+        # LongContextReorder(),
+    ]
+
+    chat_engine = index.as_query_engine(
+        streaming=True,
+        chat_mode="context",
+        response_synthesizer=response_synthesizer,
+        similarity_top_k=10,
+        # node_postprocessors=node_postprocessors,
+    )
+    return chat_engine
 
 
 def generate_article(urls, query):
     logger.info(f"Запрос: Query={query}, URLS={urls}")
 
+    llama_debug = LlamaDebugHandler(print_trace_on_end=True)
+    callback_manager = CallbackManager([llama_debug])
+    llama_logger = LlamaLogger()
+    service_context = ServiceContext.from_defaults(
+        llm=LangChainLLM(giga_chat),
+        llama_logger=llama_logger,
+        callback_manager=callback_manager,
+    )
+
     documents = LOADER.load_data(urls=urls)
-    index = VectorStoreIndex.from_documents(documents)
+    index = VectorStoreIndex.from_documents(
+        documents,
+        service_context=service_context,
+    )
     index.storage_context.persist(persist_dir=INDEX_DIR)
 
-    query_engine = index.as_query_engine(
-        service_context=SERVICE_CONTEXT,
-        similarity_top_k=10,
-    )
-    response = query_engine.query(
-        f"""Напиши полноценную статью на тему: "{query}".
-Напиши подробную и большую статью, раскрой все указанные темы полностью. Используй не меньше 1000 слов. Ответь на русском языке."""
-    )
+    query_engine = get_query_engine(index)
+    response = query_engine.query(query)
 
     logger.info(f"Ответ: {response}")
     return response
