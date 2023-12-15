@@ -2,6 +2,7 @@ FROM python:3.11
 
 RUN mkdir -p /generator
 WORKDIR /generator
+RUN mkdir -p /logs
 
 COPY requirements.txt .
 RUN pip install --upgrade pip
