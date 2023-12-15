@@ -1,10 +1,15 @@
+import asyncio
+
 import gradio as gr
-from main import generate_article
+
+from main import main
+from reader import logger
 
 
-def gradio_interface(urls, query):
+async def gradio_interface(urls, query):
     urls = urls.split("\n")
-    response = generate_article(urls, query)
+    response = await main(urls, query)
+    logger.info(f"ОТВЕТ: {response}")
     return response
 
 
@@ -37,4 +42,4 @@ def run_gradio():
 
 
 if __name__ == "__main__":
-    run_gradio()
+    asyncio.run(run_gradio())
