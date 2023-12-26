@@ -32,11 +32,7 @@
 `docker build -t generate_content .`
 - Запуск:  
 ```
-docker run -d --name=generate_content
--p 7860:7860
--e OPENAI_API_KEY=<ключ к api openai>
--v generate_content_logs:/generator/logs
-generate_content
+docker run -d --name=generate_content -p 7860:7860 -e OPENAI_API_KEY=<ключ к api openai> -v generate_content_logs:/generator/logs generate_content
 ```
 
 ## Журнал

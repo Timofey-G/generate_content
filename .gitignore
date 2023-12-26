@@ -7,3 +7,8 @@ storage
 logs.log
 test*
 experiments.ipynb
+.streamlit/
+RAG.ipynb
+default.sqlite
+guidance.ipynb
+tokens.json

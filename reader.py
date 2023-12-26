@@ -15,6 +15,11 @@ handler = logging.FileHandler("logs/logs.log")
 formatter = logging.Formatter("%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+trulens_logger = logging.getLogger("trulens_eval")
+trulens_logger.setLevel(logging.ERROR)
+trulens_logger.addHandler(handler)
+
 logging.getLogger().setLevel(logging.WARNING)
 
 
