@@ -1,6 +1,7 @@
 import asyncio
 import os
 from typing import List, Tuple
+import time
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
@@ -21,6 +22,24 @@ class Article:
     density: List[int]
     start: int
     end: int
+    summarization_statements: str
+    verified_statements: str
+    article_statements: str
+
+
+def timing_decorator(func):
+    async def wrapper(*args, **kwargs):
+        article = args[0]
+        start_time = time.perf_counter()
+        result = await func(*args, **kwargs)
+        end_time = time.perf_counter()
+        time_elapsed = end_time - start_time
+        print(
+            f"Функция {func.__name__} выполнялась {time_elapsed:.2f} секунд для статьи с URL: {article.url}"
+        )
+        return result
+
+    return wrapper
 
 
 def chart(text: str) -> List[int]:
@@ -78,83 +97,80 @@ def extract_span(
     return start, end
 
 
-# async def summarize(topic: str, text: str, text_length: int, answer_length=2000) -> str:
-#     prompt = (
-#         f"Your task is to create a more concise version of the content related to the topic '{topic}'. "
-#         "It is important to identify and focus on the main information related to this topic, "
-#         "while ensuring that all key facts and instructions are preserved in their complete form. "
-#         "Please ignore any unrelated content such as comments, side news, or information from headers or sidebars. "
-#         "The response should be in Russian and should provide a simplified yet detailed presentation, "
-#         f"ensuring that no critical details are omitted and the text contains at least {answer_length} characters. "
-#         f"Here is the text to be reworked: ```{text[:text_length]}```"
-#     )
-#     chat_completion = await async_client.chat.completions.create(
-#         messages=[{"role": "user", "content": prompt}],
-#         model="gpt-3.5-turbo-16k",
-#     )
-#     return chat_completion.choices[0].message.content
-
-
-async def summarize(topic: str, text: str, text_length: int, answer_length=2000) -> str:
-    # print("*" * 150)
+async def summarize(topic: str, text: str, max_length: int) -> str:
     prompt = (
-        f"Перепишите следующий текст, убрав всю очевидную и общую информацию. "
-        "Обязательно сохраните конкретные утверждения, факты, цифры, инструкции, рецепты и т.д. "
-        f"Ответ должен быть на русском языке, все важные данные и факты должны остаться нетронутыми. "
-        f"Вот текст для переработки: ```{text[:text_length]}```"
+        "Перепишите следующий текст, сосредоточив внимание на удалении общей и очевидной информации, которая не добавляет новых знаний. "
+        "Старайтесь исключить информацию, которая не приносит практической пользы или новых знаний. "
+        f"Также игнорируй информацию, которая не относится к теме '{topic}'. "
+        "Обязательно сохраните все конкретные утверждения, факты, цифры, инструкции, рецепты и т.д. "
+        "Текст должен сохранить все детали, такие как специфические рекомендации и примеры описываемых вещей, "
+        "удаляй только незначимую информацию, а все конкретные примеры, характеристики и описание вещей оставь нетронутыми. "
+        "Ответ должен быть на русском языке. "
+        f"Вот текст для переработки: ```{text[:max_length]}```"
     )
-    # print(prompt)
     chat_completion = await async_client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="gpt-4-1106-preview",
+        temperature=0.0,
     )
-    # print("*" * 150)
-    # print(chat_completion.choices[0].message.content)
-
-    # input_word_count = count_words(prompt)
-    # output_word_count = count_words(chat_completion.choices[0].message.content)
-
-    # metrics = load_metrics()
-
-    # metrics["input_words"] += input_word_count
-    # metrics["output_words"] += output_word_count
-    # save_metrics(metrics)
-
-    # print(f"Текущее общее количество входящих слов: {metrics['input_words']}")
-    # print(f"Текущее общее количество исходящих слов: {metrics['output_words']}")
-    # print(
-    #     f"Текущее общее количество баксов входящих: {round(((metrics['input_words']/750)*1000)/100000,2)}"
-    # )
-    # print(
-    #     f"Текущее общее количество баксов исходящих: {round(((metrics['output_words']/750)*1000)/100000,2)}"
-    # )
-    # print(
-    #     f"Текущее общее количество баксов всего: {round((((metrics['output_words']/750)*1000)/100000)+(((metrics['input_words']/750)*1000)/100000),2)}"
-    # )
-
     return chat_completion.choices[0].message.content
 
 
+@timing_decorator
 async def process_article(article, max_length=20000):
+    # article.summarized_text = ""
+    # return
     try:
         article.summarized_text = await summarize(
             article.topic, article.text, max_length
         )
     except Exception as e:
         print("ОШИБКА", e)
-        logger.error(f"Ошибка при обработке статьи: {article.url}, Ошибка: {e}")
+        logger.error(f"Ошибка при суммаризации статьи: {article.url}, Ошибка: {e}")
         article.summarized_text = ""
+        return
 
 
 def answer(topic: str, articles: List[Article], separator="*" * 124) -> str:
     articles_info = f"\n\n{separator[:len(separator)]}\n\n".join(
-        [f"{art.url}\n{art.summarized_text}" for art in articles]
+        [
+            f"{art.url}\n{art.summarized_text}\n\n{separator[:len(separator)//4]}\n"
+            f"Необоснованные утверждения в статье:\n{art.article_statements}"
+            for art in articles
+        ]
     )
 
     pattern = f"""Ключевая информация, полученная с сайтов:
 {articles_info}"""
 
     return pattern
+
+
+async def text_analysis(topic, text, max_length) -> str:
+    prompt = (
+        f"Я предоставлю тебе текст, твоя задача проанализировать его, и выделить сомнительные утверждения в тексте относящиеся к теме: '{topic}', "
+        "которые совсем не похожи на правду и никак не обоснованы. "
+        f"Все такие утверждения выдели в ответе в формате нумерованного списка. Вот текст: ```{text[:max_length]}```."
+    )
+    chat_completion = await async_client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="gpt-3.5-turbo-1106",
+        temperature=0.0,
+    )
+    return chat_completion.choices[0].message.content
+
+
+@timing_decorator
+async def article_analysis(article, max_length=20000):
+    try:
+        article.article_statements = await text_analysis(
+            article.topic, article.text, max_length
+        )
+    except Exception as e:
+        print("ОШИБКА", e)
+        logger.error(f"Ошибка при анализе статьи: {article.url}, Ошибка: {e}")
+        article.article_statements = ""
+        return
 
 
 async def main(urls, topic):
@@ -181,41 +197,12 @@ async def main(urls, topic):
         article.density = chart(article.full_text)
         article.start, article.end = extract_span(article.density)
         article.text = extract_article(article.full_text, article.start, article.end)
-        print(elem.text)
         articles.append(article)
 
     logger.info(f"Количество успешных извлеченных статей {len(articles)}")
-    await asyncio.gather(*[process_article(article) for article in articles])
 
-    context = ""
-    for article in articles:
-        context += article.summarized_text + "\n\n\n"
-    context = context[:-3]
+    requests_list = [process_article(article) for article in articles]
+    requests_list.extend([article_analysis(article) for article in articles])
+    await asyncio.gather(*requests_list)
 
     return answer(topic, articles)
-
-
-# import json
-
-# log_file = "tokens.json"
-
-
-# def count_words(text: str) -> int:
-#     """Подсчитывает количество слов в предоставленном тексте."""
-#     words = text.split()
-#     return len(words)
-
-
-# def load_metrics():
-#     """Загружает текущие метрики из файла."""
-#     try:
-#         with open(log_file, "r") as file:
-#             return json.load(file)
-#     except (FileNotFoundError, json.JSONDecodeError):
-#         return {"input_words": 0, "output_words": 0}
-
-
-# def save_metrics(metrics):
-#     """Сохраняет метрики в файл."""
-#     with open(log_file, "w") as file:
-#         json.dump(metrics, file)
